@@ -80,11 +80,11 @@ def add_comment(request, username, post_id):
     post = get_object_or_404(Post, id=post_id, author__username=username)
     form = CommentForm(request.POST or None)
     if form.is_valid():
-        new_comment = form.save(commit=False)
-        new_comment.author = request.user
-        new_comment.post = post
-        new_comment.save()
-        return redirect("post", username=request.user.username, post_id=post_id)
+        comment = form.save(commit=False)
+        comment.author = request.user
+        comment.post = post
+        comment.save()
+        return redirect("post", username=username, post_id=post_id)
 
 
 def page_not_found(request, exception=None):
