@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from yatube.settings import POSTS_PER_PAGE
 
-from .forms import PostForm
+from .forms import CommentForm, PostForm
 from .models import Group, Post
 
 User = get_user_model()
@@ -52,8 +52,12 @@ def profile(request, username):
 def post_view(request, username, post_id):
     post = get_object_or_404(Post, id=post_id, author__username=username)
     author = post.author
+    form = CommentForm()
+    comments = post.comments.all()
     return render(request, 'post.html', {"post": post,
-                                         "author": author})
+                                         "author": author,
+                                         "form": form,
+                                         "comments": comments})
 
 
 @login_required
@@ -69,6 +73,18 @@ def post_edit(request, username, post_id):
         return redirect("post", username=username, post_id=post_id)
     return render(request, 'new_post.html', {"post": post,
                                              "form": form})
+
+
+@login_required
+def add_comment(request, username, post_id):
+    post = get_object_or_404(Post, id=post_id, author__username=username)
+    form = CommentForm(request.POST or None)
+    if form.is_valid():
+        new_comment = form.save(commit=False)
+        new_comment.author = request.user
+        new_comment.post = post
+        new_comment.save()
+        return redirect("post", username=request.user.username, post_id=post_id)
 
 
 def page_not_found(request, exception=None):
