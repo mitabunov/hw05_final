@@ -41,7 +41,7 @@ class PostURLTests(TestCase):
             text="Текст для теста, больше 15 символов",
             author=cls.author,
             group=cls.group,
-            image=cls.uploaded,
+            image="posts/small.gif",
         )
 
     @classmethod
