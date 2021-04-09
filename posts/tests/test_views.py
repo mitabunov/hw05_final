@@ -4,6 +4,7 @@ import tempfile
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
+# from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -14,7 +15,7 @@ from yatube.settings import POSTS_PER_PAGE
 User = get_user_model()
 
 
-class PostURLTests(TestCase):
+class PostViewTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
