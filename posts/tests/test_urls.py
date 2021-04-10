@@ -40,7 +40,7 @@ class PostURLTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_user_profile(self):
-        response = self.guest_client.get(
+        response = self.authorized_client.get(
             reverse("profile", kwargs={"username": self.author}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
 

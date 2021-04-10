@@ -94,7 +94,7 @@ class PostViewTests(TestCase):
         self.check_post(response_group)
 
     def test_profile_page_show_correct_context(self):
-        response_profile = self.guest_client.get(
+        response_profile = self.authorized_client.get(
             reverse("profile", kwargs={"username": self.author})
         )
         self.check_post(response_profile)

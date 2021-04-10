@@ -17,19 +17,19 @@ class FormsTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
-        cls.small_gif = (
-            b'\x47\x49\x46\x38\x39\x61\x02\x00'
-            b'\x01\x00\x80\x00\x00\x00\x00\x00'
-            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-            b'\x0A\x00\x3B'
-        )
-        cls.uploaded = SimpleUploadedFile(
-            name='small.gif',
-            content=cls.small_gif,
-            content_type='image/gif'
-        )
+        # cls.small_gif = (
+        #     b'\x47\x49\x46\x38\x39\x61\x02\x00'
+        #     b'\x01\x00\x80\x00\x00\x00\x00\x00'
+        #     b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+        #     b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+        #     b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+        #     b'\x0A\x00\x3B'
+        # )
+        # cls.uploaded = SimpleUploadedFile(
+        #     name='small.gif',
+        #     content=cls.small_gif,
+        #     content_type='image/gif'
+        # )
         cls.group = Group.objects.create(
             title="test-title",
             slug="test-slug",
@@ -60,11 +60,24 @@ class FormsTests(TestCase):
         self.assertEqual(Post.objects.count(), posts_count)
 
     def test_authorised_user_new_post(self):
+        self.small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        self.uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=self.small_gif,
+            content_type='image/gif'
+        )
         posts_count = Post.objects.count()
         form_data = {
             "group": FormsTests.group.id,
             "text": "Добавленный пост",
-            # "image": "posts/small.gif",
+            "image": self.uploaded,
         }
         response = self.authorized_client.post(
             reverse("new_post"),
@@ -77,9 +90,22 @@ class FormsTests(TestCase):
         self.assertEqual(new_post.group, FormsTests.group)
         self.assertEqual(new_post.text, form_data["text"])
         self.assertEqual(new_post.author, self.author)
-        # self.assertTrue(new_post.image)
+        self.assertTrue(new_post.image)
 
     def test_author_can_edit_post(self):
+        self.small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        self.uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=self.small_gif,
+            content_type='image/gif'
+        )
         post = Post.objects.create(
             text="Текст для теста",
             author=self.author,

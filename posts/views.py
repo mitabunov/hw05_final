@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from yatube.settings import POSTS_PER_PAGE
 
 from .forms import CommentForm, PostForm
-from .models import Group, Post
+from .models import Follow, Group, Post
 
 User = get_user_model()
 
@@ -47,8 +47,14 @@ def profile(request, username):
     paginator = Paginator(post_list, POSTS_PER_PAGE)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
+    auth = request.user.is_authenticated
+    check_follow = Follow.objects.filter(user=request.user,
+                                         author__username=username
+                                         ).exists()
+    following = auth and check_follow
     return render(request, "profile.html", {"page": page,
-                                            "author": author})
+                                            "author": author,
+                                            "following": following})
 
 
 def post_view(request, username, post_id):
@@ -97,3 +103,32 @@ def page_not_found(request, exception=None):
 
 def server_error(request):
     return render(request, "misc/500.html", status=500)
+
+
+@login_required
+def follow_index(request):
+    __import__("pdb").set_trace()
+    following_list = get_object_or_404(Follow, user=request.user)
+    following = [author.author.id for author in following_list]
+    post_list = get_object_or_404(Post, author__in=following)
+    paginator = Paginator(post_list, POSTS_PER_PAGE)
+    page_number = request.GET.get("page")
+    page = paginator.get_page(page_number)
+    __import__("pdb").set_trace()
+    return render(request, "follow.html", {"page": page})
+
+
+@login_required
+def profile_follow(request, username):
+    author = get_object_or_404(User, username=username)
+    if not Follow.objects.filter(user=request.user, author=author).exists():
+        Follow.objects.create(user=request.user, author=author)
+    return redirect("profile", username=username)
+
+
+@login_required
+def profile_unfollow(request, username):
+    author = get_object_or_404(User, username=username)
+    if Follow.objects.filter(user=request.user, author=author).exists():
+        Follow.objects.filter(user=request.user, author=author).delete()
+    return redirect("profile", username=username)
