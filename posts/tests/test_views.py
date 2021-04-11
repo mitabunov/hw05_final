@@ -9,7 +9,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from posts.models import Group, Post
+from posts.models import Follow, Group, Post
 from yatube.settings import POSTS_PER_PAGE
 
 User = get_user_model()
@@ -38,6 +38,7 @@ class PostViewTests(TestCase):
             slug="test-slug",
         )
         cls.author = User.objects.create_user(username="Nikolay")
+        cls.user = User.objects.create_user(username="Podpischeg")
         cls.post = Post.objects.create(
             text="Текст для теста, больше 15 символов",
             author=cls.author,
@@ -110,6 +111,7 @@ class PostViewTests(TestCase):
         response = self.authorized_client.get(reverse("new_post"))
         form_fields = {
             "text": forms.fields.CharField,
+            "image": forms.fields.ImageField,
         }
         for value, expected in form_fields.items():
             with self.subTest(value=value):
@@ -117,7 +119,6 @@ class PostViewTests(TestCase):
                 self.assertIsInstance(form_field, expected)
 
     def test_edit_post_shows_correct_context(self):
-        self.authorized_client.force_login(self.author)
         response = self.authorized_client.get(
             reverse("post_edit",
                     kwargs={"username": self.author,
@@ -142,3 +143,45 @@ class PostViewTests(TestCase):
         Post.objects.bulk_create(objs)
         response = self.guest_client.get(reverse("index") + "?page=2")
         self.assertEqual(len(response.context.get("page").object_list), 3)
+
+    def test_cache_index(self):
+        response_1 = self.authorized_client.get(reverse("index"))
+        Post.objects.create(text="Test cache", author=self.author)
+        response_2 = self.authorized_client.get(reverse("index"))
+        # cache.clear()
+        # response_3 = self.authorized_client.get(reverse("index"))
+        self.assertEqual(
+            response_1.content, response_2.content)
+        # self.assertNotEqual(response_2.content, response_3.content)
+
+    def test_follow_and_unfollow_another_user(self):
+        self.authorized_client.force_login(self.user)
+        self.authorized_client.get(
+            reverse("profile_follow", kwargs={
+                "username": self.author})
+        )
+        follower = Follow.objects.filter(user=self.user, author=self.author)
+        self.assertTrue(follower)
+        self.authorized_client.get(
+            reverse("profile_unfollow", kwargs={
+                "username": self.author})
+        )
+        non_follower = Follow.objects.filter(
+            user=self.user, author=self.author)
+        self.assertFalse(non_follower)
+
+    def test_follow_page_for_different_users(self):
+        self.non_follower = User.objects.create_user(username="CoolGuy")
+        self.authorized_client.force_login(self.user)
+        self.authorized_client.get(
+            reverse("profile_follow", kwargs={
+                "username": self.author})
+        )
+        Post.objects.create(
+            text="Текст для любимого подписчега", author=self.author)
+        response = self.authorized_client.get(reverse("follow_index"))
+        self.authorized_client.force_login(self.non_follower)
+        response_coolguy = self.authorized_client.get(reverse("follow_index"))
+        self.assertContains(response, "Текст для любимого подписчега")
+        self.assertNotContains(
+            response_coolguy, "Текст для любимого подписчега")

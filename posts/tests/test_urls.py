@@ -98,7 +98,7 @@ class PostURLTests(TestCase):
             "new_post.html": reverse("new_post")
         }
         for template, reverse_name in templates_url_names.items():
-            with self.subTest():
+            with self.subTest(reverse_name=reverse_name):
                 self.authorized_client.force_login(self.author)
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)

@@ -3,7 +3,6 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 
-# from django.views.decorators.cache import cache_page
 from yatube.settings import POSTS_PER_PAGE
 
 from .forms import CommentForm, PostForm
@@ -12,7 +11,6 @@ from .models import Follow, Group, Post
 User = get_user_model()
 
 
-# @cache_page(20)
 def index(request):
     latest = Post.objects.all()
     paginator = Paginator(latest, POSTS_PER_PAGE)
@@ -47,11 +45,12 @@ def profile(request, username):
     paginator = Paginator(post_list, POSTS_PER_PAGE)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
-    auth = request.user.is_authenticated
-    check_follow = Follow.objects.filter(user=request.user,
-                                         author__username=username
-                                         ).exists()
-    following = auth and check_follow
+    following = False
+    if request.user.is_authenticated:
+        if Follow.objects.filter(user=request.user,
+                                 author=author
+                                 ).exists():
+            following = True
     return render(request, "profile.html", {"page": page,
                                             "author": author,
                                             "following": following})
@@ -107,21 +106,21 @@ def server_error(request):
 
 @login_required
 def follow_index(request):
-    __import__("pdb").set_trace()
-    following_list = get_object_or_404(Follow, user=request.user)
+    following_list = Follow.objects.filter(user=request.user).all()
     following = [author.author.id for author in following_list]
-    post_list = get_object_or_404(Post, author__in=following)
+    post_list = Post.objects.filter(author__in=following)
     paginator = Paginator(post_list, POSTS_PER_PAGE)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
-    __import__("pdb").set_trace()
     return render(request, "follow.html", {"page": page})
 
 
 @login_required
 def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
-    if not Follow.objects.filter(user=request.user, author=author).exists():
+    follow_now = Follow.objects.filter(
+        user=request.user, author=author).exists()
+    if not follow_now and author != request.user:
         Follow.objects.create(user=request.user, author=author)
     return redirect("profile", username=username)
 

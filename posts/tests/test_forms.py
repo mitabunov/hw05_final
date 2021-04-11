@@ -7,7 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from posts.models import Group, Post
+from posts.models import Comment, Group, Post
 
 User = get_user_model()
 
@@ -17,24 +17,16 @@ class FormsTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
-        # cls.small_gif = (
-        #     b'\x47\x49\x46\x38\x39\x61\x02\x00'
-        #     b'\x01\x00\x80\x00\x00\x00\x00\x00'
-        #     b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-        #     b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-        #     b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-        #     b'\x0A\x00\x3B'
-        # )
-        # cls.uploaded = SimpleUploadedFile(
-        #     name='small.gif',
-        #     content=cls.small_gif,
-        #     content_type='image/gif'
-        # )
         cls.group = Group.objects.create(
             title="test-title",
             slug="test-slug",
         )
         cls.author = User.objects.create_user(username="Nikolay")
+        cls.post = Post.objects.create(
+            text="Текст для теста",
+            author=cls.author,
+            group=FormsTests.group,
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -84,7 +76,7 @@ class FormsTests(TestCase):
             data=form_data,
             follow=True
         )
-        new_post = Post.objects.last()
+        new_post = Post.objects.first()
         self.assertRedirects(response, reverse("index"))
         self.assertEqual(Post.objects.count(), posts_count + 1)
         self.assertEqual(new_post.group, FormsTests.group)
@@ -93,34 +85,15 @@ class FormsTests(TestCase):
         self.assertTrue(new_post.image)
 
     def test_author_can_edit_post(self):
-        self.small_gif = (
-            b'\x47\x49\x46\x38\x39\x61\x02\x00'
-            b'\x01\x00\x80\x00\x00\x00\x00\x00'
-            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-            b'\x0A\x00\x3B'
-        )
-        self.uploaded = SimpleUploadedFile(
-            name='small.gif',
-            content=self.small_gif,
-            content_type='image/gif'
-        )
-        post = Post.objects.create(
-            text="Текст для теста",
-            author=self.author,
-            group=FormsTests.group,
-        )
         posts_count = Post.objects.count()
         form_data = {
             "group": FormsTests.group.id,
             "text": "Измененный текст",
-            "image": self.uploaded,
         }
         response = self.authorized_client.post(
             reverse("post_edit",
                     kwargs={"username": self.author.username,
-                            "post_id": post.id}),
+                            "post_id": self.post.id}),
             data=form_data,
             follow=True
         )
@@ -128,11 +101,55 @@ class FormsTests(TestCase):
             response,
             reverse("post",
                     kwargs={"username": self.author.username,
-                            "post_id": post.id})
+                            "post_id": self.post.id})
         )
-        modified_post = Post.objects.last()
+        modified_post = Post.objects.first()
         self.assertEqual(Post.objects.count(), posts_count)
         self.assertEqual(modified_post.group, FormsTests.group)
         self.assertEqual(modified_post.text, form_data["text"])
         self.assertEqual(modified_post.author, self.author)
-        self.assertEqual(modified_post.image.name, "posts/small.gif")
+
+    def test_guest_user_cant_comment_post(self):
+        comments_count = Comment.objects.count()
+        form_data = {
+            "text": "Ах ты, гравитация, бессердечная ты сука!",
+        }
+        response = self.guest_client.post(
+            reverse("add_comment", kwargs={
+                "username": self.author,
+                "post_id": self.post.id
+            }),
+            data=form_data,
+            follow=True
+        )
+        reference = reverse("login") + "?next=" + reverse(
+            "add_comment",
+            kwargs={
+                "username": self.author,
+                "post_id": self.post.id
+            })
+        self.assertRedirects(response, reference)
+        self.assertEqual(Comment.objects.count(), comments_count)
+
+    def test_authorised_user_can_comment_post(self):
+        comments_count = Comment.objects.count()
+        form_data = {
+            "text": "Бугагашенька!",
+        }
+        response = self.authorized_client.post(
+            reverse("add_comment", kwargs={
+                "username": self.author,
+                "post_id": self.post.id
+            }),
+            data=form_data,
+            follow=True
+        )
+        new_comment = Comment.objects.first()
+        self.assertRedirects(response, reverse(
+            "post", kwargs={
+                "username": self.author,
+                "post_id": self.post.id
+            }))
+        self.assertEqual(Comment.objects.count(), comments_count + 1)
+        self.assertEqual(new_comment.text, form_data["text"])
+        self.assertEqual(new_comment.author, self.author)
