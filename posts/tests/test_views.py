@@ -34,13 +34,13 @@ class PostViewTests(TestCase):
             content_type='image/gif'
         )
         cls.group = Group.objects.create(
-            title="test-title",
-            slug="test-slug",
+            title="Остаться в живых",
+            slug="lost",
         )
-        cls.author = User.objects.create_user(username="Nikolay")
-        cls.user = User.objects.create_user(username="Podpischeg")
+        cls.author = User.objects.create_user(username="J.Locke")
+        cls.user = User.objects.create_user(username="B.Linus")
         cls.post = Post.objects.create(
-            text="Текст для теста, больше 15 символов",
+            text="Только я знаю, что я могу.",
             author=cls.author,
             group=cls.group,
             image="posts/small.gif",
@@ -125,6 +125,7 @@ class PostViewTests(TestCase):
                             "post_id": self.post.id}))
         form_fields = {
             "text": forms.fields.CharField,
+            "image": forms.fields.ImageField,
         }
         for value, expected in form_fields.items():
             with self.subTest(value=value):
@@ -154,7 +155,7 @@ class PostViewTests(TestCase):
             response_1.content, response_2.content)
         # self.assertNotEqual(response_2.content, response_3.content)
 
-    def test_follow_and_unfollow_another_user(self):
+    def test_follow_and_unfollow_feature(self):
         self.authorized_client.force_login(self.user)
         self.authorized_client.get(
             reverse("profile_follow", kwargs={
@@ -171,17 +172,16 @@ class PostViewTests(TestCase):
         self.assertFalse(non_follower)
 
     def test_follow_page_for_different_users(self):
-        self.non_follower = User.objects.create_user(username="CoolGuy")
+        self.non_follower = User.objects.create_user(username="SpongeBob")
         self.authorized_client.force_login(self.user)
         self.authorized_client.get(
             reverse("profile_follow", kwargs={
                 "username": self.author})
         )
-        Post.objects.create(
-            text="Текст для любимого подписчега", author=self.author)
+        post = Post.objects.create(
+            text="Иногда друзья значительно опаснее, чем враги.", author=self.author)
         response = self.authorized_client.get(reverse("follow_index"))
         self.authorized_client.force_login(self.non_follower)
         response_coolguy = self.authorized_client.get(reverse("follow_index"))
-        self.assertContains(response, "Текст для любимого подписчега")
-        self.assertNotContains(
-            response_coolguy, "Текст для любимого подписчега")
+        self.assertContains(response, post.text)
+        self.assertNotContains(response_coolguy, post.text)
