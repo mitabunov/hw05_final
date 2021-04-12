@@ -10,10 +10,10 @@ class PostModelTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.author = User.objects.create_user(username="test_user")
-        cls.group = Group.objects.create(title="test")
+        cls.author = User.objects.create_user(username="J.Tribbiani")
+        cls.group = Group.objects.create(title="Friends")
         cls.post = Post.objects.create(
-            text="Текст для теста, больше 15 символов",
+            text="Everybody needs Friends!",
             author=cls.author,
             group=cls.group,
         )
