@@ -14,12 +14,12 @@ class PostURLTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.group = Group.objects.create(
-            title="test-tilte",
-            slug="test-slug",
+            title="Доктор Хаус",
+            slug="housemd",
         )
-        cls.author = User.objects.create_user(username="Nikolay")
+        cls.author = User.objects.create_user(username="G.House")
         cls.post = Post.objects.create(
-            text="Текст для теста, больше 15 символов",
+            text="Если ему станет лучше, прав я. Если он умрёт — права ты.",
             author=cls.author,
             group=cls.group
         )
@@ -95,10 +95,11 @@ class PostURLTests(TestCase):
             "index.html": reverse("index"),
             "group.html": reverse(
                 "group", kwargs={"slug": self.group.slug}),
-            "new_post.html": reverse("new_post")
+            "new_post.html": reverse("new_post"),
+            "follow.html": reverse("follow_index"),
         }
         for template, reverse_name in templates_url_names.items():
-            with self.subTest(reverse_name=reverse_name):
+            with self.subTest(template=template):
                 self.authorized_client.force_login(self.author)
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
