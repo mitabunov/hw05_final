@@ -71,3 +71,10 @@ class Follow(models.Model):
                                on_delete=models.CASCADE,
                                related_name="following",
                                verbose_name="Автор")
+    
+    class Meta:
+        ordering = ["-user"]
+    
+    def __str__(self):
+        name = f'{self.user} -> {self.author}'
+        return name
