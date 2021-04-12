@@ -4,22 +4,24 @@ import tempfile
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
-# from django.core.cache import cache
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from posts.models import Follow, Group, Post
 from yatube.settings import POSTS_PER_PAGE
 
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
+
 User = get_user_model()
 
 
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostViewTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
         cls.small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'
@@ -43,12 +45,12 @@ class PostViewTests(TestCase):
             text="Только я знаю, что я могу.",
             author=cls.author,
             group=cls.group,
-            image="posts/small.gif",
+            image=cls.uploaded,
         )
 
     @classmethod
     def tearDownClass(cls):
-        shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
         super().tearDownClass()
 
     def setUp(self):
@@ -65,7 +67,7 @@ class PostViewTests(TestCase):
         self.assertEqual(post.author, self.post.author)
         self.assertEqual(post.text, self.post.text)
         self.assertEqual(post.group, self.post.group)
-        self.assertEqual(post.image.name, 'posts/small.gif')
+        self.assertEqual(post.image, "posts/small.gif")
 
     def test_pages_use_correct_template(self):
         templates_pages_names = {
@@ -149,11 +151,11 @@ class PostViewTests(TestCase):
         response_1 = self.authorized_client.get(reverse("index"))
         Post.objects.create(text="Test cache", author=self.author)
         response_2 = self.authorized_client.get(reverse("index"))
-        # cache.clear()
-        # response_3 = self.authorized_client.get(reverse("index"))
+        cache.clear()
+        response_3 = self.authorized_client.get(reverse("index"))
         self.assertEqual(
             response_1.content, response_2.content)
-        # self.assertNotEqual(response_2.content, response_3.content)
+        self.assertNotEqual(response_2.content, response_3.content)
 
     def test_follow_and_unfollow_feature(self):
         self.authorized_client.force_login(self.user)
@@ -179,7 +181,8 @@ class PostViewTests(TestCase):
                 "username": self.author})
         )
         post = Post.objects.create(
-            text="Иногда друзья значительно опаснее, чем враги.", author=self.author)
+            text="Иногда друзья значительно опаснее, чем враги.",
+            author=self.author)
         response = self.authorized_client.get(reverse("follow_index"))
         self.authorized_client.force_login(self.non_follower)
         response_coolguy = self.authorized_client.get(reverse("follow_index"))

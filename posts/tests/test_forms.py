@@ -52,7 +52,7 @@ class FormsTests(TestCase):
         self.assertEqual(Post.objects.count(), posts_count)
 
     def test_authorised_user_new_post(self):
-        self.small_gif = (
+        small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'
             b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
@@ -60,16 +60,16 @@ class FormsTests(TestCase):
             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
             b'\x0A\x00\x3B'
         )
-        self.uploaded = SimpleUploadedFile(
+        uploaded = SimpleUploadedFile(
             name='small.gif',
-            content=self.small_gif,
+            content=small_gif,
             content_type='image/gif'
         )
         posts_count = Post.objects.count()
         form_data = {
             "group": FormsTests.group.id,
             "text": "Спокойной ночи, жалкий человечишка!",
-            "image": self.uploaded,
+            "image": uploaded,
         }
         response = self.authorized_client.post(
             reverse("new_post"),

@@ -61,10 +61,17 @@ def post_view(request, username, post_id):
     author = post.author
     form = CommentForm()
     comments = post.comments.all()
+    following = False
+    if request.user.is_authenticated:
+        if Follow.objects.filter(user=request.user,
+                                 author=author
+                                 ).exists():
+            following = True
     return render(request, 'post.html', {"post": post,
                                          "author": author,
                                          "form": form,
-                                         "comments": comments})
+                                         "comments": comments,
+                                         "following": following})
 
 
 @login_required
