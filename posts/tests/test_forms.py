@@ -18,12 +18,12 @@ class FormsTests(TestCase):
         super().setUpClass()
         settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
         cls.group = Group.objects.create(
-            title="test-title",
-            slug="test-slug",
+            title="Теория Большого взрыва",
+            slug="the-big-bang-theory",
         )
-        cls.author = User.objects.create_user(username="Nikolay")
+        cls.author = User.objects.create_user(username="S.Cooper")
         cls.post = Post.objects.create(
-            text="Текст для теста",
+            text="Я не сумасшедший. Моя мамуля меня проверяла.",
             author=cls.author,
             group=FormsTests.group,
         )
@@ -42,7 +42,7 @@ class FormsTests(TestCase):
         posts_count = Post.objects.count()
         form_data = {
             "group": FormsTests.group,
-            "text": "Тестовый текст гостя",
+            "text": "Barry Kripke was here",
         }
         response = self.guest_client.post(
             reverse("new_post"), data=form_data, follow=True
@@ -68,7 +68,7 @@ class FormsTests(TestCase):
         posts_count = Post.objects.count()
         form_data = {
             "group": FormsTests.group.id,
-            "text": "Добавленный пост",
+            "text": "Спокойной ночи, жалкий человечишка!",
             "image": self.uploaded,
         }
         response = self.authorized_client.post(
@@ -88,7 +88,7 @@ class FormsTests(TestCase):
         posts_count = Post.objects.count()
         form_data = {
             "group": FormsTests.group.id,
-            "text": "Измененный текст",
+            "text": "Ненавижу эту планету!",
         }
         response = self.authorized_client.post(
             reverse("post_edit",
