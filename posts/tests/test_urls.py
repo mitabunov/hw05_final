@@ -114,11 +114,5 @@ class PostURLTests(TestCase):
         self.assertTemplateUsed(response, "new_post.html")
 
     def test_page_not_found(self):
-        response = self.guest_client.get(reverse("page_not_found"))
+        response = self.guest_client.get("this_page_does_not_exist")
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-
-    def test_server_error(self):
-        response = self.guest_client.get(reverse("server_error"))
-        self.assertEqual(
-            response.status_code, HTTPStatus.INTERNAL_SERVER_ERROR
-        )

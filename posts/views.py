@@ -45,12 +45,6 @@ def profile(request, username):
     paginator = Paginator(post_list, POSTS_PER_PAGE)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
-#     following = False
-#     if request.user.is_authenticated:
-#         if Follow.objects.filter(user=request.user,
-#                                  author=author
-#                                  ).exists():
-#             following = True
     database_entry = Follow.objects.filter(user=request.user,
                                            author=author
                                            ).exists()
@@ -64,7 +58,6 @@ def post_view(request, username, post_id):
     post = get_object_or_404(Post, id=post_id, author__username=username)
     author = post.author
     form = CommentForm()
-#     comments = post.comments.all()
     following = False
     if request.user.is_authenticated:
         if Follow.objects.filter(user=request.user,
@@ -74,7 +67,6 @@ def post_view(request, username, post_id):
     return render(request, 'post.html', {"post": post,
                                          "author": author,
                                          "form": form,
-#                                          "comments": comments,
                                          "following": following})
 
 
@@ -120,7 +112,6 @@ def follow_index(request):
     following_list = Follow.objects.filter(user=request.user).all()
     following = [author.author.id for author in following_list]
     post_list = Post.objects.filter(author__in=following)
-#     post_list = Post.objects.filter(author__in=request.user.follower).all() - пробуй
     paginator = Paginator(post_list, POSTS_PER_PAGE)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
@@ -139,12 +130,8 @@ def profile_follow(request, username):
 
 @login_required
 def profile_unfollow(request, username):
-#     author = get_object_or_404(User, username=username)
-#     database_entry = Follow.objects.filter(user=request.user, author=author)
-#     if database_entry.exists():
-#         database_entry.delete()
-#     или
-    database_entry = get_object_or_404(Follow, author__username=username, user=request.user)
+    database_entry = get_object_or_404(
+        Follow, author__username=username, user=request.user)
     if database_entry:
         database_entry.delete()
     return redirect("profile", username=username)

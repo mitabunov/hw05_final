@@ -76,8 +76,6 @@ class PostViewTests(TestCase):
             "group.html": (
                 reverse("group", kwargs={"slug": self.group.slug})
             ),
-            "misc/404.html": reverse("page_not_found"),
-            "misc/500.html": reverse("server_error"),
         }
         for template, reverse_name in templates_pages_names.items():
             with self.subTest(reverse_name=reverse_name):

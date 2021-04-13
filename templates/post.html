@@ -6,14 +6,14 @@
 
 <main role="main" class="container">
     <div class="row">
-
-        {% include "inclusions/author_info.html" with author=author following=following %}
+        <div class="col-md-3 mb-3 mt-1">
+        {% include "inclusions/author_info.html" with author=author %}
+        </div>
 
         <div class="col-md-9">
 
             {% include "inclusions/post_item.html" with post=post %}
 
-<!--             поменял тут с комментс на пост -->
             {% include "inclusions/comments.html" with post=post %}
 
         </div>

@@ -20,5 +20,8 @@
             </div>
             <small class="text-muted">{{ post.pub_date|date:"F j, Y" }}</small>
         </div>
+        <div class="d-flex float-right">
+            <small class="text-muted">Комментариев: <span style="color: red;">{{ post.comments.count }}</span></small>
+        </div>
     </div>
 </div>
