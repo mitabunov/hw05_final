@@ -22,18 +22,18 @@ class PostViewTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.small_gif = (
-            b'\x47\x49\x46\x38\x39\x61\x02\x00'
-            b'\x01\x00\x80\x00\x00\x00\x00\x00'
-            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-            b'\x0A\x00\x3B'
+        small_gif = (
+            b"\x47\x49\x46\x38\x39\x61\x02\x00"
+            b"\x01\x00\x80\x00\x00\x00\x00\x00"
+            b"\xFF\xFF\xFF\x21\xF9\x04\x00\x00"
+            b"\x00\x00\x00\x2C\x00\x00\x00\x00"
+            b"\x02\x00\x01\x00\x00\x02\x02\x0C"
+            b"\x0A\x00\x3B"
         )
-        cls.uploaded = SimpleUploadedFile(
-            name='small.gif',
-            content=cls.small_gif,
-            content_type='image/gif'
+        uploaded = SimpleUploadedFile(
+            name="small.gif",
+            content=small_gif,
+            content_type="image/gif"
         )
         cls.group = Group.objects.create(
             title="Остаться в живых",
@@ -45,7 +45,7 @@ class PostViewTests(TestCase):
             text="Только я знаю, что я могу.",
             author=cls.author,
             group=cls.group,
-            image=cls.uploaded,
+            image=uploaded,
         )
 
     @classmethod
@@ -149,40 +149,49 @@ class PostViewTests(TestCase):
         response_1 = self.authorized_client.get(reverse("index"))
         Post.objects.create(text="Test cache", author=self.author)
         response_2 = self.authorized_client.get(reverse("index"))
-        cache.clear()
-        response_3 = self.authorized_client.get(reverse("index"))
         self.assertEqual(
             response_1.content, response_2.content)
+        cache.clear()
+        response_3 = self.authorized_client.get(reverse("index"))
         self.assertNotEqual(response_2.content, response_3.content)
 
-    def test_follow_and_unfollow_feature(self):
+    def test_follow_feature(self):
         self.authorized_client.force_login(self.user)
-        self.authorized_client.get(
+        follow_count = Follow.objects.count()
+        response = self.authorized_client.get(
             reverse("profile_follow", kwargs={
                 "username": self.author})
         )
-        follower = Follow.objects.filter(user=self.user, author=self.author)
-        self.assertTrue(follower)
-        self.authorized_client.get(
+        new_follow = Follow.objects.first()
+        self.assertRedirects(response, reverse("profile", kwargs={
+            "username": self.author})
+        )
+        self.assertEqual(Follow.objects.count(), follow_count + 1)
+        self.assertEqual(new_follow.author, self.author)
+        self.assertEqual(new_follow.user, self.user)
+
+    def test_unfollow_feature(self):
+        self.authorized_client.force_login(self.user)
+        Follow.objects.create(user=self.user, author=self.author)
+        follow_count = Follow.objects.count()
+        response = self.authorized_client.get(
             reverse("profile_unfollow", kwargs={
                 "username": self.author})
         )
-        non_follower = Follow.objects.filter(
-            user=self.user, author=self.author)
-        self.assertFalse(non_follower)
-
-    def test_follow_page_for_different_users(self):
-        self.non_follower = User.objects.create_user(username="SpongeBob")
-        self.authorized_client.force_login(self.user)
-        self.authorized_client.get(
-            reverse("profile_follow", kwargs={
-                "username": self.author})
+        self.assertRedirects(response, reverse("profile", kwargs={
+            "username": self.author})
         )
-        post = Post.objects.create(
-            text="Иногда друзья значительно опаснее, чем враги.",
-            author=self.author)
+        self.assertEqual(Follow.objects.count(), follow_count - 1)
+
+    def test_post_visible_for_follower(self):
+        Follow.objects.create(user=self.user, author=self.author)
+        self.authorized_client.force_login(self.user)
         response = self.authorized_client.get(reverse("follow_index"))
-        self.authorized_client.force_login(self.non_follower)
-        response_coolguy = self.authorized_client.get(reverse("follow_index"))
-        self.assertContains(response, post.text)
-        self.assertNotContains(response_coolguy, post.text)
+        self.check_post(response)
+
+    def test_post_invisible_for_a_non_follower(self):
+        Follow.objects.create(user=self.user, author=self.author)
+        non_follower = User.objects.create_user(username="SpongeBob")
+        self.authorized_client.force_login(non_follower)
+        response = self.authorized_client.get(reverse("follow_index"))
+        self.assertFalse(response.context["page"].end_index())

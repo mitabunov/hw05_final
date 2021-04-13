@@ -22,11 +22,6 @@ class FormsTests(TestCase):
             slug="the-big-bang-theory",
         )
         cls.author = User.objects.create_user(username="S.Cooper")
-        cls.post = Post.objects.create(
-            text="Я не сумасшедший. Моя мамуля меня проверяла.",
-            author=cls.author,
-            group=FormsTests.group,
-        )
 
     @classmethod
     def tearDownClass(cls):
@@ -53,17 +48,17 @@ class FormsTests(TestCase):
 
     def test_authorised_user_new_post(self):
         small_gif = (
-            b'\x47\x49\x46\x38\x39\x61\x02\x00'
-            b'\x01\x00\x80\x00\x00\x00\x00\x00'
-            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-            b'\x0A\x00\x3B'
+            b"\x47\x49\x46\x38\x39\x61\x02\x00"
+            b"\x01\x00\x80\x00\x00\x00\x00\x00"
+            b"\xFF\xFF\xFF\x21\xF9\x04\x00\x00"
+            b"\x00\x00\x00\x2C\x00\x00\x00\x00"
+            b"\x02\x00\x01\x00\x00\x02\x02\x0C"
+            b"\x0A\x00\x3B"
         )
         uploaded = SimpleUploadedFile(
-            name='small.gif',
+            name="small.gif",
             content=small_gif,
-            content_type='image/gif'
+            content_type="image/gif"
         )
         posts_count = Post.objects.count()
         form_data = {
@@ -85,6 +80,11 @@ class FormsTests(TestCase):
         self.assertTrue(new_post.image)
 
     def test_author_can_edit_post(self):
+        self.post = Post.objects.create(
+            text="Я не сумасшедший. Моя мамуля меня проверяла.",
+            author=self.author,
+            group=FormsTests.group,
+        )
         posts_count = Post.objects.count()
         form_data = {
             "group": FormsTests.group.id,
@@ -105,11 +105,12 @@ class FormsTests(TestCase):
         )
         modified_post = Post.objects.first()
         self.assertEqual(Post.objects.count(), posts_count)
-        self.assertEqual(modified_post.group, FormsTests.group)
+        self.assertEqual(modified_post.group, self.group)
         self.assertEqual(modified_post.text, form_data["text"])
         self.assertEqual(modified_post.author, self.author)
 
     def test_guest_user_cant_comment_post(self):
+        post = Post.objects.create(text="Fun with Flag", author=self.author)
         comments_count = Comment.objects.count()
         form_data = {
             "text": "Ах ты, гравитация, бессердечная ты сука!",
@@ -117,7 +118,7 @@ class FormsTests(TestCase):
         response = self.guest_client.post(
             reverse("add_comment", kwargs={
                 "username": self.author,
-                "post_id": self.post.id
+                "post_id": post.id
             }),
             data=form_data,
             follow=True
@@ -126,12 +127,13 @@ class FormsTests(TestCase):
             "add_comment",
             kwargs={
                 "username": self.author,
-                "post_id": self.post.id
+                "post_id": post.id
             })
         self.assertRedirects(response, reference)
         self.assertEqual(Comment.objects.count(), comments_count)
 
     def test_authorised_user_can_comment_post(self):
+        post = Post.objects.create(text="Fun with Flag", author=self.author)
         comments_count = Comment.objects.count()
         form_data = {
             "text": "Бугагашенька!",
@@ -139,7 +141,7 @@ class FormsTests(TestCase):
         response = self.authorized_client.post(
             reverse("add_comment", kwargs={
                 "username": self.author,
-                "post_id": self.post.id
+                "post_id": post.id
             }),
             data=form_data,
             follow=True
@@ -148,7 +150,7 @@ class FormsTests(TestCase):
         self.assertRedirects(response, reverse(
             "post", kwargs={
                 "username": self.author,
-                "post_id": self.post.id
+                "post_id": post.id
             }))
         self.assertEqual(Comment.objects.count(), comments_count + 1)
         self.assertEqual(new_comment.text, form_data["text"])
