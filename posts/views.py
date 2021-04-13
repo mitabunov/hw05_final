@@ -120,6 +120,7 @@ def follow_index(request):
     following_list = Follow.objects.filter(user=request.user).all()
     following = [author.author.id for author in following_list]
     post_list = Post.objects.filter(author__in=following)
+#     post_list = Post.objects.filter(author__in=request.user.follower).all() - пробуй
     paginator = Paginator(post_list, POSTS_PER_PAGE)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
