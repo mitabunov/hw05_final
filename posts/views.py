@@ -59,7 +59,6 @@ def post_view(request, username, post_id):
     post = get_object_or_404(Post, id=post_id, author__username=username)
     author = post.author
     form = CommentForm()
-    following = False
     comments = post.comments.all()
     return render(request, 'post.html', {"post": post,
                                          "author": author,
