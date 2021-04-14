@@ -112,11 +112,6 @@ def server_error(request):
 
 @login_required
 def follow_index(request):
-    # following_list = Follow.objects.filter(user=request.user).all()
-    # following = [author.author.id for author in following_list]
-    # post_list = Post.objects.filter(author__in=following)
-    # f = get_object_or_404(User, username=request.user)
-    # f.follower.all()
     post_list = Post.objects.filter(author__following__user=request.user)
     paginator = Paginator(post_list, POSTS_PER_PAGE)
     page_number = request.GET.get("page")
