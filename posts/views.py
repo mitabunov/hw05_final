@@ -45,8 +45,11 @@ def profile(request, username):
     paginator = Paginator(post_list, POSTS_PER_PAGE)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
-    database_entry = author.following.filter(user=request.user)
-    following = request.user.is_authenticated and database_entry
+    following = False
+    login = request.user.is_authenticated
+    if login:
+        check_follow = author.following.filter(user=request.user)
+    following = login and check_follow
     return render(request, "profile.html", {"page": page,
                                             "author": author,
                                             "following": following})
@@ -57,6 +60,7 @@ def post_view(request, username, post_id):
     author = post.author
     form = CommentForm()
     following = False
+    comments = post.comments.all()
     if request.user.is_authenticated:
         if Follow.objects.filter(user=request.user,
                                  author=author
@@ -65,6 +69,7 @@ def post_view(request, username, post_id):
     return render(request, 'post.html', {"post": post,
                                          "author": author,
                                          "form": form,
+                                         "comments": comments,
                                          "following": following})
 
 
@@ -107,9 +112,12 @@ def server_error(request):
 
 @login_required
 def follow_index(request):
-    following_list = Follow.objects.filter(user=request.user).all()
-    following = [author.author.id for author in following_list]
-    post_list = Post.objects.filter(author__in=following)
+    # following_list = Follow.objects.filter(user=request.user).all()
+    # following = [author.author.id for author in following_list]
+    # post_list = Post.objects.filter(author__in=following)
+    # f = get_object_or_404(User, username=request.user)
+    # f.follower.all()
+    post_list = Post.objects.filter(author__following__user=request.user)
     paginator = Paginator(post_list, POSTS_PER_PAGE)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
