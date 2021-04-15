@@ -46,10 +46,8 @@ def profile(request, username):
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
     following = False
-    login = request.user.is_authenticated
-    if login:
-        check_follow = author.following.filter(user=request.user)
-    following = login and check_follow
+    if request.user.is_authenticated:
+        following = author.following.filter(user=request.user)
     return render(request, "profile.html", {"page": page,
                                             "author": author,
                                             "following": following})
@@ -126,6 +124,6 @@ def profile_follow(request, username):
 def profile_unfollow(request, username):
     database_entry = get_object_or_404(
         Follow, author__username=username, user=request.user)
-    if database_entry:
+    if database_entry.exists():
         database_entry.delete()
     return redirect("profile", username=username)
