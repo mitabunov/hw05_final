@@ -52,7 +52,7 @@ def profile(request, username):
     return render(request, "profile.html", {"page": page,
                                             "author": author,
                                             "following": following,
-                                            "is_author": is_not_author})
+                                            "is_not_author": is_not_author})
 
 
 def post_view(request, username, post_id):
