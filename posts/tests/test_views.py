@@ -156,9 +156,10 @@ class PostViewTests(TestCase):
         self.assertNotEqual(response_2.content, response_3.content)
 
     def test_follow_feature(self):
-        self.authorized_client.force_login(self.user)
+        self.user_client = Client()
+        self.user_client.force_login(self.user)
         follow_count = Follow.objects.count()
-        response = self.authorized_client.get(
+        response = self.user_client.get(
             reverse("profile_follow", kwargs={
                 "username": self.author})
         )
@@ -171,10 +172,11 @@ class PostViewTests(TestCase):
         self.assertEqual(new_follow.user, self.user)
 
     def test_unfollow_feature(self):
-        self.authorized_client.force_login(self.user)
+        self.user_client = Client()
+        self.user_client.force_login(self.user)
         Follow.objects.create(user=self.user, author=self.author)
         follow_count = Follow.objects.count()
-        response = self.authorized_client.get(
+        response = self.user_client.get(
             reverse("profile_unfollow", kwargs={
                 "username": self.author})
         )
@@ -195,3 +197,5 @@ class PostViewTests(TestCase):
         self.authorized_client.force_login(non_follower)
         response = self.authorized_client.get(reverse("follow_index"))
         self.assertFalse(response.context["page"].end_index())
+#         self.assertEqual(response.context['page'].paginator.count, 0)
+
