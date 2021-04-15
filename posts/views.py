@@ -61,7 +61,7 @@ def post_view(request, username, post_id):
     author = post.author
     form = CommentForm()
     comments = post.comments.all()
-    return render(request, 'post.html', {"post": post,
+    return render(request, "post.html", {"post": post,
                                          "author": author,
                                          "form": form,
                                          "comments": comments})
@@ -78,7 +78,7 @@ def post_edit(request, username, post_id):
     if form.is_valid():
         form.save()
         return redirect("post", username=username, post_id=post_id)
-    return render(request, 'new_post.html', {"post": post,
+    return render(request, "new_post.html", {"post": post,
                                              "form": form})
 
 
