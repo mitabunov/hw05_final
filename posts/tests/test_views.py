@@ -196,4 +196,4 @@ class PostViewTests(TestCase):
         non_follower = User.objects.create_user(username="SpongeBob")
         self.authorized_client.force_login(non_follower)
         response = self.authorized_client.get(reverse("follow_index"))
-        self.assertEqual(response.context["page"].paginator.count, 0)
+        self.assertEqual(len(response.context["page"]), 0)
