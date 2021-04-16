@@ -8,7 +8,7 @@
         <div class="col-md-3 mb-3 mt-1">
             {% include "inclusions/author_info.html" with author=author %}
             <div class="card">
-                {% if author != request.user and request.user.is_authenticated%}
+                {% if author != request.user and request.user.is_authenticated %}
                     {% if following %}
                         <a class="btn btn-lg btn-light" 
                             href="{% url 'profile_unfollow' author.username %}" role="button"> 
