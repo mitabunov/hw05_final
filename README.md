@@ -34,18 +34,18 @@ Python3 Django Pytest Pillow Bootstrap
 ### Запуск приложения
 Установите зависимости из requirements.txt:
 
-pip install -r requirements.txt
+`pip install -r requirements.txt`
 
 Выполните все необходимые миграции:
 
-python manage.py makemigrations
+`python manage.py makemigrations`
 
-python manage.py migrate
+`python manage.py migrate`
 
 Для доступа к панели администратора создайте администратора:
 
-python manage.py createsuperuser
+`python manage.py createsuperuser`
 
 Запустите приложение:
 
-python manage.py runserver
+`python manage.py runserver`
